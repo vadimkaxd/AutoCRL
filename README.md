@@ -1,79 +1,72 @@
-# AutoBSC++
+# AutoCRL (Auto Clash Royale League)
 
-This userscript automatically interacts with the Brawl Stars Championship stream, so you can receive all the rewards without doing anything.
+Этот userscript автоматически взаимодействует с трансляциями Clash Royale League, так что вы можете получать все награды, ничего не делая.
 
-Supported:
-- Cheers (click on an emote during a match)
-- Polls (select MVP after match, etc)
-- Sliders (sometimes appears after a match, prompting you to rate it with a slider)
-- Lootdrops (randomly appearing messages that give you some amount of points if you click within a small amount of time)
-- Predictions (disabled by default, automatically places predictions before a match starts according to selected strategy)
+Поддерживается:
+- Cheers (нажатие на эмодзи во время матча)
+- Polls (выбор MVP после матча и т.д.)
+- Quiz (автоматический выбор правильного ответа)
+- Sliders (иногда появляются после матча с просьбой оценить его с помощью слайдера)
+- Lootdrops (случайно появляющиеся сообщения, которые дают вам некоторое количество очков, если вы кликнете по ним в течение короткого времени)
+- Predictions (отключено по умолчанию, автоматически делает предикты перед началом матча в соответствии с выбранной стратегией)
 
-Working as of August 16, 2026.
+Работает на момент 8 ноября 2026.
 
-![AutoBSC showcase, a bit outdated, will be updated next time](https://github.com/LaptopCat/AutoBSC/raw/master/showcase.png)
+![AutoCRL showcase](https://github.com/vadimkaxd/AutoCRL/raw/main/showcase.png)
 
-## Quick Start
+## Быстрый старт
 
-1. Install a userscript loader like [Tampermonkey](https://www.tampermonkey.net/), [Violentmonkey](https://violentmonkey.github.io/) or others.
+1. Установите менеджер userscript-ов, например [Tampermonkey](https://www.tampermonkey.net/), [Violentmonkey](https://violentmonkey.github.io/) или другие.
 
-2. Install AutoBSC by clicking [here](https://github.com/LaptopCat/AutoBSC/raw/master/autobsc.user.js).
+2. Установите AutoCRL, нажав [сюда](https://github.com/vadimkaxd/AutoCRL/raw/main/autocrl.user.js).
 
-3. Open the stream page on https://event.supercell.com/brawlstars/
+3. Откройте страницу трансляции на https://event.supercell.com/clashroyale/
 
-4. If "AutoBSC++ loaded" is shown in the event logs, then it's working. Now you can just leave the tab open and let it do the work for you.
+4. Если в логах событий появилось сообщение "AutoCRL Загружен", значит скрипт работает. Теперь вы можете просто оставить вкладку открытой и позволить ему делать всю работу за вас.
 
+## Известные/возможные проблемы
+- Cheers не отправляются, если не выбран эмодзи (скрипт пытается выбрать его автоматически, но могут быть задержки)
+- [Скрипт может не успеть отправить ответы, если на вашем компьютере неверно выставлено системное время](https://github.com/LaptopCat/AutoBSC/issues/6#issuecomment-5309955612)
 
-## Known/possible issues
-- Cheers not being sent if no cheer emote selected
-- [Script may fail to submit answers in time if your system clock is wrong](https://github.com/LaptopCat/AutoBSC/issues/6#issuecomment-5309955612)
+## Отличия от AutoBSC
+Этот проект основан на [AutoBSC](https://github.com/CatMe0w/AutoBSC) и его версии для Clash Royale от LaptopCat, но имеет ряд отличий:
 
-## Differences from AutoBSC
-This project is based on [AutoBSC](https://github.com/CatMe0w/AutoBSC), but has many differences from it
+- AutoCRL имеет оверлей, отображающий данные и позволяющий быстро настраивать скрипт.
+- Викторины всегда отвечаются правильно.
+- Несколько стратегий для автопредикта: всегда синие/красные, случайная команда или выбор за большинством.
+- Автоматический сбор дропов и прохождение слайдеров.
+- Взаимодействие на основе DOM (гарантирует, что такие вещи, как отображение ваших очков, всегда работают).
+- Логирование событий (отправка чирса, предикт или опрос) в ленту справа на экране.
+- Адаптация под цвета и стили Clash Royale.
 
-- AutoBSC++ has an overlay showing data and allowing you to quickly configure the script
-- Quizzes are always answered correctly
-- Many different ways to autopredict: always blue/red, random team or pick same as majority
-- Automatically collect loot drops and sliders
-- DOM-based interactions (ensures stuff, such as displaying your points always works)
-- Logging of events, such as sending cheer, prediction or poll can be done in the feed on the right side of the screen
+## Оверлей
+Оверлей состоит из двух секций:
+### Data (Данные)
+В этой секции отображается, сколько (предположительно*) пользователей подключено, и сколько предиктов было сделано на каждую команду.
 
-## Overlay
-The overlay has two sections:
-### Data
-This section displays how many (allegedly*) users are connected, and how many predictions were made for each team.
+> \* Я не знаю, насколько эти данные точны, но они приходят в сообщении чирса от сервера.
 
-> \* I don't know if this data is correct, but it is sent in the cheer message from the server
+### Config (Настройки)
+Позволяет настраивать скрипт через графический интерфейс:
+- **Авточирс**: Автоматически отправлять чирсы (эмодзи по углам стрима) для получения очков. Включено по умолчанию.
+- **Отвечать на опросы**: Автоматически отвечать на опросы (например, "Кто был MVP матча?") для получения очков. Включено по умолчанию.
+- **Отвечать на викторины**: Автоматически давать правильные ответы на викторины. Включено по умолчанию.
+- **Отвечать на слайдеры**: Автоматически двигать интерактивные слайдеры для получения очков. Включено по умолчанию.
+- **Собирать дропы**: Автоматически собирать случайные дропы для получения очков. Включено по умолчанию.
+- **Автопредикт**: Автоматически делать предикты для получения очков (и большего количества, если предикт верный). Отключено по умолчанию.
+    - **Стратегия предикта**: Стратегия выбора команды для автопредикта. Может быть: Только синие, Только красные, Случайно или За большинством. По умолчанию — За большинством.
+- **Логи в чат**: Выводить события (отправка чирса, опроса, викторины и т.д.) в ленту справа на экране. Включено по умолчанию.
+- **Динамические логи**: Показывать промежуточные статусы (например, "Проверяем кнопку..."). Включено по умолчанию.
+- **Без графики чирса**: Отключить графику чирсов для повышения производительности на слабых устройствах. Отключено по умолчанию.
+- **Отключить плеер**: Отключить загрузку YouTube-плеера. Полезно при плохом соединении или если вы не смотрите стрим. Отключено по умолчанию.
 
-### Config
-Allows you to configure the script using a GUI
-- Autocheer:
-Automatically send cheers (emojis on the bottom corners of the stream) to receive 5 points. Enabled by default
-- Answer polls:
-Automatically respond to "Who was the MVP of this match?" polls to receive 100 points. Enabled by default
-- Answer quiz:
-Automatically provide the correct answer to quizzes, such as "What does Melodie use as a weapon?" to receive 50 points. Enabled by default
-- Answer slider:
-Automatically slide the interactive sliders to receive 2 points. Enabled by default
-- Collect lootdrop:
-Automatically collect random loot drops to receive 10 points. Enabled by default
-- Autopredict:
-Automatically place predictions to receive 10 points (125 if prediction turns out true). Disabled by default
-- - Autopredict strategy:
-The strategy used for selecting the team for autopredict. Can be Blue (always choose blue), Red (always choose red), Random (randomly select) or Follow majority (pick same as the majority). Default is Follow majority
-- Feed logging:
-Log events (sending cheer, poll, quiz, etc) to the feed on the right side of the screen. Enabled by default
-- Disable Cheer Graphics:
-Disable cheer graphics to improve performance on low-end hardware. Disabled by default
-- Disable Stream Player:
-Disable the youtube embed from loading. Useful for bad connections or if you dont care about watching the stream. Disabled by default
+## Благодарности
 
-## Credits
+- **catme0w**: за разработку оригинального скрипта [AutoBSC](https://github.com/catme0w/AutoBSC)
+- **laptopcat**: за создание версии для Clash Royale (AutoBSC++ CR Edition)
+- **123SONIC321**: за улучшение UI оверлея и предложения/баг-репорты
+- Всех остальных, кто предлагал идеи, сообщал об ошибках или просто пользуется скриптом.
 
-- catme0w: for developing the original [AutoBSC](https://github.com/catme0w/AutoBSC) script
-- 123SONIC321: for making an improved version of the overlay UI, and other suggestions/bug reports
-- Anyone else submitting suggestions/issues or just using the script
-
-## License
+## Лицензия
 
 MIT License
