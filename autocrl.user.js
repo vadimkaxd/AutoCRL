@@ -1,19 +1,19 @@
 // ==UserScript==
-// @name         AutoBSC++
-// @namespace    https://github.com/LaptopCat
-// @homepageURL  https://github.com/LaptopCat/AutoBSC
-// @supportURL   https://github.com/LaptopCat/AutoBSC/issues
+// @name         AutoCRL (Auto Clash Royale League)
+// @namespace    https://github.com/vadimkaxd
+// @homepageURL  https://github.com/vadimkaxd/AutoCRL
+// @supportURL   https://github.com/vadimkaxd/AutoCRL/issues
 // @license      MIT
-// @version      4.0.0
-// @description  Auto completes Brawl Stars Championship live stream events
-// @author       laptopcat
-// @match        https://event.supercell.com/brawlstars/*
-// @icon         https://event.supercell.com/brawlstars/page-icon.ico
+// @version      1.0.0
+// @description  Auto completes Clash Royale League live stream events (Collects drops, answers polls, predictions)
+// @author       vadimkaxd
+// @match        https://event.supercell.com/clashroyale/*
+// @icon         https://event.supercell.com/clashroyale/favicon.ico
 // @grant        none
 // ==/UserScript==
 
 function load(key, def) {
-    let res = localStorage.getItem("autobsc-" + key);
+    let res = localStorage.getItem("autocrl-" + key);
     if (res === null) {
         store(key, def);
         return def;
@@ -23,7 +23,7 @@ function load(key, def) {
 }
 
 function store(key, val) {
-    localStorage.setItem("autobsc-" + key, JSON.stringify(val));
+    localStorage.setItem("autocrl-" + key, JSON.stringify(val));
 }
 
 let cheerEnabled = load("cheer", true);
@@ -36,9 +36,17 @@ let sliderEnabled = load("slider", true);
 let feedLoggingEnabled = load("feedLogging", true);
 let dynamicLogging = load("dynamicLogging", true);
 let lowDetail = load("lowDetail", false);
-let noPlayer = load("noPlayer", false)
+let noPlayer = load("noPlayer", false);
 let debug = false;
 let feed;
+
+function getColor(msg) {
+    if (/не удался|не появилась|не найдена|не появилось/i.test(msg)) return '#e74c3c';
+    if (/отправлен|пройден|собран|сделан|Загружен/i.test(msg)) return '#2ecc71';
+    if (/предикт|синих|красных/i.test(msg)) return '#9b59b6';
+    if (/Проверяем|Отвечаем|Попытка|Открываем|Выбираем/i.test(msg)) return '#3498db';
+    return '#f1c40f';
+}
 
 function log(msg, id) {
     if (!feedLoggingEnabled) return;
@@ -49,12 +57,16 @@ function log(msg, id) {
             if (!feed) return;
         }
 
+        let color = getColor(msg);
+        let textStyle = `color: ${color} !important; text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important; font-weight: bold !important;`;
+
         if (id) {
             let existing = document.getElementById(id);
             if (existing) {
                 let title = existing.getElementsByClassName("rewardCard__textContainer__title")[0];
                 if (title) {
                     title.textContent = msg;
+                    title.style.cssText = textStyle;
                     return;
                 }
             }
@@ -72,7 +84,7 @@ function log(msg, id) {
                             <div data-v-6ab4ab95="" class="rewardCard__rewardContainer">
                                 <div data-v-6ab4ab95="" class="rewardCard__infoContainer">
                                     <div data-v-6ab4ab95="" class="rewardCard__textContainer" style="opacity: 1;">
-                                        <div data-v-6ab4ab95="" class="rewardCard__textContainer__title">${msg}</div>
+                                        <div data-v-6ab4ab95="" class="rewardCard__textContainer__title" style="${textStyle}">${msg}</div>
                                     </div>
                                 </div>
                             </div>
@@ -104,15 +116,15 @@ function purge(elements) {
 }
 
 function checkMainDataSection() {
-    const users = document.getElementById("autobsc-users-wrap");
-    const teams = document.getElementById("autobsc-teams-wrap");
-    const mainSec = document.getElementById("autobsc-data-section");
-    const configTitle = document.getElementById("autobsc-config-title");
+    const users = document.getElementById("autocrl-users-wrap");
+    const teams = document.getElementById("autocrl-teams-wrap");
+    const mainSec = document.getElementById("autocrl-data-section");
+    const configTitle = document.getElementById("autocrl-config-title");
 
     if (users && teams && mainSec) {
-        if (users.classList.contains("autobsc-hidden-block") &&
-            teams.classList.contains("autobsc-hidden-block")) {
-            mainSec.classList.add("autobsc-hidden-block");
+        if (users.classList.contains("autocrl-hidden-block") &&
+            teams.classList.contains("autocrl-hidden-block")) {
+            mainSec.classList.add("autocrl-hidden-block");
             if (configTitle) configTitle.style.marginTop = "0px";
         } else {
             if (configTitle) configTitle.style.marginTop = "20px";
@@ -121,29 +133,33 @@ function checkMainDataSection() {
 }
 
 function showDataSubSection(id) {
-    const mainSec = document.getElementById("autobsc-data-section");
+    const mainSec = document.getElementById("autocrl-data-section");
     const subSec = document.getElementById(id);
-    const configTitle = document.getElementById("autobsc-config-title");
+    const configTitle = document.getElementById("autocrl-config-title");
 
-    if (subSec && subSec.classList.contains("autobsc-hidden-block")) {
-        subSec.classList.remove("autobsc-hidden-block");
+    if (subSec && subSec.classList.contains("autocrl-hidden-block")) {
+        subSec.classList.remove("autocrl-hidden-block");
     }
-    if (mainSec && mainSec.classList.contains("autobsc-hidden-block")) {
-        mainSec.classList.remove("autobsc-hidden-block");
+    if (mainSec && mainSec.classList.contains("autocrl-hidden-block")) {
+        mainSec.classList.remove("autocrl-hidden-block");
     }
 
     if (configTitle) configTitle.style.marginTop = "20px";
 }
 
 function updateDependencies() {
-    const stratRow = document.getElementById("autobsc-strat-row");
-    const dynRow = document.getElementById("autobsc-dyn-row");
+    const stratRow = document.getElementById("autocrl-strat-row");
+    const dynRow = document.getElementById("autocrl-dyn-row");
 
-    if (matchPredictionEnabled) stratRow.classList.remove("autobsc-disabled");
-    else stratRow.classList.add("autobsc-disabled");
+    if (stratRow) {
+        if (matchPredictionEnabled) stratRow.classList.remove("autocrl-disabled");
+        else stratRow.classList.add("autocrl-disabled");
+    }
 
-    if (feedLoggingEnabled) dynRow.classList.remove("autobsc-disabled");
-    else dynRow.classList.add("autobsc-disabled");
+    if (dynRow) {
+        if (feedLoggingEnabled) dynRow.classList.remove("autocrl-disabled");
+        else dynRow.classList.add("autocrl-disabled");
+    }
 }
 
 (function() {
@@ -189,8 +205,7 @@ function updateDependencies() {
             this.send = function(data) {
                 if (debug) {
                     const parsed = JSON.parse(data);
-
-                    console.log("[AutoBSC] Sending message:", data, parsed);
+                    console.log("[AutoCRL] Отправка сообщения:", data, parsed);
                 }
                 originalSend.call(this, data);
             };
@@ -214,7 +229,7 @@ function updateDependencies() {
             if (messageType === "cheer") {
                 if (conn) {
                     conn.textContent = event.payload.connectedClients;
-                    showDataSubSection("autobsc-users-wrap");
+                    showDataSubSection("autocrl-users-wrap");
                 }
 
                 if (lowDetail) {
@@ -223,17 +238,73 @@ function updateDependencies() {
                 }
 
                 if (cheerEnabled && event.payload.typeId !== lastCheerId) {
-                    let cardId = "autobsc-log-cheer-" + Date.now();
+                    let cardId = "autocrl-log-cheer-" + Date.now();
                     if (dynamicLogging) {
-                        log("Sending cheer...", cardId);
+                        log("Проверяем кнопку чирса...", cardId);
                         setTimeout(() => {
-                            for (let btn of document.getElementsByClassName("cheerButtonContainer__cheerButton")) btn.click();
-                            log("Cheer sent", cardId);
+                            let cheerBtn = document.getElementsByClassName("cheerButtonContainer__cheerButton");
+
+                            if (cheerBtn.length > 0) {
+                                log("Кнопка чирс найдена, отправляем...", cardId);
+                                for (let btn of cheerBtn) btn.click();
+                                log("Чирс отправлен", cardId);
+                            } else {
+                                log("Кнопка чирс недоступна. Открываем меню...", cardId);
+                                let switchBtn = document.getElementsByClassName("cheerButtonContainer__switchButton")[0];
+                                if (switchBtn) {
+                                    switchBtn.click();
+                                    let attempts = 0;
+                                    const maxAttempts = 20;
+                                    const pollPin = () => {
+                                        attempts++;
+                                        let pinBtns = document.getElementsByClassName("cheer-pin-button");
+                                        if (pinBtns.length > 0) {
+                                            log("Выбираем эмодзи...", cardId);
+                                            pinBtns[0].click();
+                                            setTimeout(() => {
+                                                let newCheerBtn = document.getElementsByClassName("cheerButtonContainer__cheerButton");
+                                                if (newCheerBtn.length > 0) {
+                                                    log("Эмодзи выбрано, отправляем...", cardId);
+                                                    for (let btn of newCheerBtn) btn.click();
+                                                    log("Чирс отправлен", cardId);
+                                                } else {
+                                                    log("Кнопка чирс не появилась.", cardId);
+                                                }
+                                            }, 1000);
+                                        } else if (attempts < maxAttempts) {
+                                            setTimeout(pollPin, 500);
+                                        } else {
+                                            log("Меню эмодзи не появилось.", cardId);
+                                        }
+                                    };
+                                    setTimeout(pollPin, 1000);
+                                } else {
+                                    log("Кнопка выбора эмодзи не найдена.", cardId);
+                                }
+                            }
                         }, 1500);
                     } else {
-                        log("Sending cheer");
+                        log("Отправка чирса");
                         setTimeout(() => {
-                            for (let btn of document.getElementsByClassName("cheerButtonContainer__cheerButton")) btn.click();
+                            let cheerBtn = document.getElementsByClassName("cheerButtonContainer__cheerButton");
+                            if (cheerBtn.length > 0) {
+                                for (let btn of cheerBtn) btn.click();
+                            } else {
+                                let switchBtn = document.getElementsByClassName("cheerButtonContainer__switchButton")[0];
+                                if (switchBtn) {
+                                    switchBtn.click();
+                                    setTimeout(() => {
+                                        let pinBtns = document.getElementsByClassName("cheer-pin-button");
+                                        if (pinBtns.length > 0) {
+                                            pinBtns[0].click();
+                                            setTimeout(() => {
+                                                let newCheerBtn = document.getElementsByClassName("cheerButtonContainer__cheerButton");
+                                                for (let btn of newCheerBtn) btn.click();
+                                            }, 1000);
+                                        }
+                                    }, 1000);
+                                }
+                            }
                         }, 1500);
                     }
                     lastCheerId = event.payload.typeId;
@@ -242,18 +313,18 @@ function updateDependencies() {
 
             if (messageType === "poll" && pollEnabled) {
                 if (event.payload.typeId !== lastPollId) {
-                    let cardId = "autobsc-log-poll-" + Date.now();
+                    let cardId = "autocrl-log-poll-" + Date.now();
                     if (dynamicLogging) {
-                        log("Answering poll...", cardId);
+                        log("Отвечаем на опрос...", cardId);
                         setTimeout(() => {
                             try {
                                 for (let que of document.getElementsByClassName("multiChoiceQuestionCard")) que.getElementsByTagName("button")[0].click();
                                 for (let que of document.getElementsByClassName("cardImagePoll")) que.getElementsByTagName("button")[0].click();
                             } catch (e) {}
-                            log("Poll answered", cardId);
+                            log("Опрос пройден", cardId);
                         }, 3500);
                     } else {
-                        log("Sending poll");
+                        log("Отправка опроса");
                         setTimeout(() => {
                             try {
                                 for (let que of document.getElementsByClassName("multiChoiceQuestionCard")) que.getElementsByTagName("button")[0].click();
@@ -267,17 +338,17 @@ function updateDependencies() {
 
             if (messageType === "image_poll" && pollEnabled) {
                 if (event.payload.typeId !== lastImagePollId) {
-                    let cardId = "autobsc-log-imgpoll-" + Date.now();
+                    let cardId = "autocrl-log-imgpoll-" + Date.now();
                     if (dynamicLogging) {
-                        log("Answering image poll...", cardId);
+                        log("Отвечаем на опрос с картинками...", cardId);
                         setTimeout(() => {
                             try {
                                 for (let que of document.getElementsByClassName("cardImagePoll")) que.getElementsByTagName("button")[0].click();
                             } catch (e) {}
-                            log("Image poll answered", cardId);
+                            log("Опрос с картинками пройден", cardId);
                         }, 3500);
                     } else {
-                        log("Sending image poll");
+                        log("Отправка опроса с картинками");
                         setTimeout(() => {
                             try {
                                 for (let que of document.getElementsByClassName("cardImagePoll")) que.getElementsByTagName("button")[0].click();
@@ -290,27 +361,27 @@ function updateDependencies() {
 
             if (messageType === "quiz" && quizEnabled) {
                 if (event.payload.typeId !== lastQuizId) {
-                    let cardId = "autobsc-log-quiz-" + Date.now();
+                    let cardId = "autocrl-log-quiz-" + Date.now();
+                    const answerQuiz = () => {
+                        const quizCards = document.querySelectorAll('.card-quiz[active="true"]');
+                        quizCards.forEach(card => {
+                            try {
+                                const buttons = card.querySelectorAll('.cardButton');
+                                const correctIndex = event.payload.correctAnswer.alternative;
+                                if (buttons[correctIndex]) buttons[correctIndex].click();
+                            } catch (e) {}
+                        });
+                    };
                     if (dynamicLogging) {
-                        log("Answering quiz...", cardId);
+                        log("Отвечаем на викторину...", cardId);
                         setTimeout(() => {
-                            for (let que of document.getElementsByClassName("baseCard")) {
-                                try {
-                                    if (que.getElementsByClassName("cardRules__extraPointsLabel").length === 0) continue;
-                                    que.getElementsByClassName("multiChoiceQuestionCard__button")[event.payload.correctAnswer.alternative].click();
-                                } catch (e) {}
-                            }
-                            log("Quiz answered", cardId);
+                            answerQuiz();
+                            log("Викторина пройдена", cardId);
                         }, 3500);
                     } else {
-                        log("Sending quiz");
+                        log("Отправка викторины");
                         setTimeout(() => {
-                            for (let que of document.getElementsByClassName("baseCard")) {
-                                try {
-                                    if (que.getElementsByClassName("cardRules__extraPointsLabel").length === 0) continue;
-                                    que.getElementsByClassName("multiChoiceQuestionCard__button")[event.payload.correctAnswer.alternative].click();
-                                } catch (e) {}
-                            }
+                            answerQuiz();
                         }, 3500);
                     }
                     lastQuizId = event.payload.typeId;
@@ -322,80 +393,133 @@ function updateDependencies() {
                 if (matchpredblue) matchpredblue.textContent = predictions["0"];
                 if (matchpredred) matchpredred.textContent = predictions["1"];
 
-                showDataSubSection("autobsc-teams-wrap");
+                showDataSubSection("autocrl-teams-wrap");
 
-                if (matchPredictionEnabled && event.payload.typeId !== lastMatchPredictionId) {
-                    let cardId = "autobsc-log-predict-" + Date.now();
-                    if (dynamicLogging) {
-                        log("Placing match prediction...", cardId);
-                        let team = 0;
-                        setTimeout(() => {
-                            switch (matchPredictionStrategy) {
-                                case "2":
-                                    team = 1;
-                                    break;
-                                case "rand":
-                                    team = Math.floor(Math.random() * 2);
-                                    break;
-                                case "maj":
-                                    team = predictions["0"] > predictions["1"] ? 0 : 1;
-                                    break;
+                const predId =
+                    event.payload.typeId ||
+                    event.payload.matchId ||
+                    event.payload.cardKey ||
+                    (event.payload.answers
+                        ? "ans_" + JSON.stringify(event.payload.answers)
+                        : "time_" + Date.now());
+
+                if (matchPredictionEnabled && predId !== lastMatchPredictionId) {
+                    lastMatchPredictionId = predId;
+
+                    let cardId = "autocrl-log-predict-" + Date.now();
+
+                    let team = 0;
+                    switch (matchPredictionStrategy) {
+                        case "2":
+                            team = 1;
+                            break;
+                        case "rand":
+                            team = Math.floor(Math.random() * 2);
+                            break;
+                        case "maj":
+                            try {
+                                team = Number(predictions["0"]) > Number(predictions["1"]) ? 0 : 1;
+                            } catch (e) {
+                                team = 0;
                             }
-                            log(`Placed prediction for ${team === 0 ? "Blue" : "Red"} team`, cardId);
-                            for (let a of document.getElementsByClassName("matchPredictionQuestionCard__buttonGroup")) {
-                                try {
-                                    a.getElementsByTagName("button")[team].click();
-                                } catch (e) {}
-                            }
-                        }, 10000);
-                    } else {
-                        log("Sending match prediction");
-                        let team = 0;
-                        setTimeout(() => {
-                            switch (matchPredictionStrategy) {
-                                case "2":
-                                    team = 1;
-                                    break;
-                                case "rand":
-                                    team = Math.floor(Math.random() * 2);
-                                    break;
-                                case "maj":
-                                    team = predictions["0"] > predictions["1"] ? 0 : 1;
-                                    break;
-                            }
-                            log(`Placing prediction for ${team === 0 ? "Blue" : "Red"}`);
-                            for (let a of document.getElementsByClassName("matchPredictionQuestionCard__buttonGroup")) {
-                                try {
-                                    a.getElementsByTagName("button")[team].click();
-                                } catch (e) {}
-                            }
-                        }, 10000);
+                            break;
                     }
-                    lastMatchPredictionId = event.payload.typeId;
+
+                    if (dynamicLogging)
+                        log(`Попытка предикта на ${team === 0 ? "Синих" : "Красных"}...`, cardId);
+                    else log("Попытка предикта...");
+
+                    let attempts = 0;
+                    const maxAttempts = 40;
+
+                    const pollPrediction = () => {
+                        attempts++;
+                        const cards = document.querySelectorAll('.card-prediction[active="true"]');
+                        let clicked = false;
+
+                        cards.forEach((card) => {
+                            if (card.querySelector(".picked")) {
+                                clicked = true;
+                                return;
+                            }
+
+                            const buttons = card.querySelectorAll("button.buttons-predictions");
+                            const active = Array.from(buttons).filter(
+                                (b) => !b.disabled && !b.classList.contains("is-disabled")
+                            );
+
+                            if (active[team]) {
+                                const btn = active[team];
+
+                                try {
+                                    btn.click();
+                                } catch (e) {}
+
+                                try {
+                                    const inner =
+                                        btn.querySelector(".inner-clip-content") ||
+                                        btn.querySelector(".inner-content") ||
+                                        btn;
+                                    inner.dispatchEvent(
+                                        new MouseEvent("click", {
+                                            bubbles: true,
+                                            cancelable: true,
+                                            view: window,
+                                        })
+                                    );
+                                } catch (e) {}
+
+                                clicked = true;
+                            }
+                        });
+
+                        if (clicked) {
+                            if (dynamicLogging)
+                                log(`Предикт сделан на ${team === 0 ? "Синих" : "Красных"}`, cardId);
+                            else log("Предикт сделан");
+                            return;
+                        }
+
+                        if (attempts < maxAttempts) {
+                            setTimeout(pollPrediction, 500);
+                        } else {
+                            if (dynamicLogging)
+                                log("Предикт не удался: нет доступных кнопок", cardId);
+                            else log("Предикт не удался");
+                        }
+                    };
+
+                    setTimeout(pollPrediction, 3000);
                 }
             }
 
             if (messageType === "loot_drop" && dropEnabled) {
                 if (event.payload.typeId !== lastDropId) {
-                    let cardId = "autobsc-log-drop-" + Date.now();
+                    let cardId = "autocrl-log-drop-" + Date.now();
+                    const collectLoot = () => {
+                        const lootCards = document.querySelectorAll('.card-loot[active="true"]');
+                        lootCards.forEach(card => {
+                            try {
+                                const isClaimed = card.querySelector('.card-loot-content .content.is-claimed');
+                                if (isClaimed) return;
+
+                                const grabBtn = card.querySelector('button.cta');
+                                if (grabBtn && !grabBtn.disabled) {
+                                    grabBtn.click();
+                                }
+                            } catch (e) {}
+                        });
+                    };
                     if (dynamicLogging) {
-                        log("Collecting loot drop...", cardId);
+                        log("Собираем дроп...", cardId);
                         setTimeout(() => {
-                            for (let drop of document.getElementsByClassName("lootDropCard")) {
-                                try {
-                                    drop.getElementsByClassName("rectangleButton")[0].click();
-                                } catch (e) {}
-                            }
-                            log("Loot drop collected", cardId);
+                            collectLoot();
+                            log("Дроп собран", cardId);
                         }, 2000);
                     } else {
-                        log("Collecting loot drop");
+                        log("Сбор дропа");
                         setTimeout(() => {
-                            for (let drop of document.getElementsByClassName("lootDropCard")) {
-                                try {
-                                    drop.getElementsByClassName("rectangleButton")[0].click();
-                                } catch (e) {}
-                            }
+                            collectLoot();
                         }, 2000);
                     }
                     lastDropId = event.payload.typeId;
@@ -404,9 +528,9 @@ function updateDependencies() {
 
             if (messageType === "slider" && sliderEnabled) {
                 if (event.payload.typeId !== lastSliderId) {
-                    let cardId = "autobsc-log-slider-" + Date.now();
+                    let cardId = "autocrl-log-slider-" + Date.now();
                     if (dynamicLogging) {
-                        log("Answering slider...", cardId);
+                        log("Отвечаем на слайдер...", cardId);
                         setTimeout(() => {
                             for (let drop of document.getElementsByClassName("sliderQuestionCard")) {
                                 try {
@@ -416,10 +540,10 @@ function updateDependencies() {
                                     elem.dispatchEvent(new Event("change"));
                                 } catch (e) {}
                             }
-                            log("Slider answered", cardId);
+                            log("Слайдер пройден", cardId);
                         }, 2000);
                     } else {
-                        log("Collecting slider");
+                        log("Ответ на слайдер");
                         setTimeout(() => {
                             for (let drop of document.getElementsByClassName("sliderQuestionCard")) {
                                 try {
@@ -450,17 +574,18 @@ function updateDependencies() {
 
         document.body.insertAdjacentHTML("afterbegin", `
     <style>
-    #autobsc-overlay, #autobsc-overlay *, [id^="autobsc-log-"] * {
+    #autocrl-overlay, #autocrl-overlay *, [id^="autocrl-log-"] * {
         box-sizing: border-box;
     }
-    #autobsc-overlay {
+
+    #autocrl-overlay {
         position: fixed;
         top: 15%;
         left: 10px;
         z-index: 99999999;
         direction: ltr !important;
         text-align: left !important;
-        background: rgba(26, 27, 38, 0.65);
+        background: rgba(26, 27, 38, 0.75);
         backdrop-filter: blur(12px);
         color: #e0e2ea;
         border-radius: 12px;
@@ -470,10 +595,10 @@ function updateDependencies() {
         transition: width 0.3s ease, border-radius 0.3s ease, left 0.3s ease, top 0.3s ease;
         overflow: hidden;
     }
-    #autobsc-overlay.open {
+    #autocrl-overlay.open {
         width: 300px;
     }
-    #autobsc-header {
+    #autocrl-header {
         padding: 12px 16px;
         font-weight: 700;
         font-size: 1.15rem;
@@ -488,24 +613,24 @@ function updateDependencies() {
         white-space: nowrap;
         touch-action: none;
     }
-    #autobsc-header:active {
+    #autocrl-header:active {
         cursor: grabbing;
     }
-    #autobsc-overlay.open #autobsc-header {
+    #autocrl-overlay.open #autocrl-header {
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .autobsc-chevron {
+    .autocrl-chevron {
         transition: transform 0.3s ease;
         font-size: 0.8rem;
         margin-left: .5rem;
     }
-    #autobsc-overlay.open .autobsc-chevron {
+    #autocrl-overlay.open .autocrl-chevron {
         transform: rotate(180deg);
     }
 
-    #autobsc-body {
+    #autocrl-body {
         max-height: 0;
         opacity: 0;
         padding: 0;
@@ -515,7 +640,7 @@ function updateDependencies() {
         direction: ltr;
         scrollbar-gutter: stable;
     }
-    #autobsc-overlay.open #autobsc-body {
+    #autocrl-overlay.open #autocrl-body {
         max-height: 75vh;
         opacity: 1;
         padding: 16px 16px 16px 8px;
@@ -523,16 +648,16 @@ function updateDependencies() {
         transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.3s ease;
     }
 
-    #autobsc-body.allow-scroll {
+    #autocrl-body.allow-scroll {
         overflow-y: auto;
     }
 
-    .autobsc-inner-content {
+    .autocrl-inner-content {
         direction: ltr;
         padding-left: 8px;
     }
 
-    .autobsc-hidden-block {
+    .autocrl-hidden-block {
         max-height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -541,28 +666,28 @@ function updateDependencies() {
         border: none !important;
     }
 
-    #autobsc-data-section, #autobsc-users-wrap, #autobsc-teams-wrap {
+    #autocrl-data-section, #autocrl-users-wrap, #autocrl-teams-wrap {
         transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease, padding 0.4s ease;
     }
 
-    #autobsc-data-section { max-height: 200px; margin-bottom: 8px; opacity: 1; overflow: hidden; }
-    #autobsc-users-wrap { max-height: 40px; margin-bottom: 12px; opacity: 1; }
-    #autobsc-teams-wrap { max-height: 80px; opacity: 1; }
+    #autocrl-data-section { max-height: 200px; margin-bottom: 8px; opacity: 1; overflow: hidden; }
+    #autocrl-users-wrap { max-height: 40px; margin-bottom: 12px; opacity: 1; }
+    #autocrl-teams-wrap { max-height: 80px; opacity: 1; }
 
-    .autobsc-section-title {
+    .autocrl-section-title {
         font-size: 1.15rem;
         font-weight: 700;
-        color: #7aa2f7;
+        color: #f1c40f;
         margin-bottom: 12px;
         margin-top: 20px;
-        border-bottom: 1px solid rgba(122, 162, 247, 0.2);
+        border-bottom: 1px solid rgba(241, 196, 15, 0.2);
         padding-bottom: 6px;
         white-space: nowrap;
         transition: margin-top 0.4s ease;
     }
-    .autobsc-section-title:first-child { margin-top: 0; }
+    .autocrl-section-title:first-child { margin-top: 0; }
 
-    .autobsc-stat-row {
+    .autocrl-stat-row {
         font-size: 0.9rem;
         margin-bottom: 4px;
         display: flex;
@@ -570,7 +695,7 @@ function updateDependencies() {
         white-space: nowrap;
     }
 
-    .autobsc-config-row {
+    .autocrl-config-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -581,20 +706,20 @@ function updateDependencies() {
         gap: 12px;
     }
 
-    .autobsc-disabled {
+    .autocrl-disabled {
         opacity: 0.4;
         pointer-events: none;
     }
 
-    .autobsc-switch {
+    .autocrl-switch {
         position: relative;
         display: inline-block;
         width: 38px;
         height: 20px;
         flex-shrink: 0;
     }
-    .autobsc-switch input { opacity: 0; width: 0; height: 0; }
-    .autobsc-slider-btn {
+    .autocrl-switch input { opacity: 0; width: 0; height: 0; }
+    .autocrl-slider-btn {
         position: absolute;
         cursor: pointer;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -602,7 +727,7 @@ function updateDependencies() {
         transition: .3s;
         border-radius: 20px;
     }
-    .autobsc-slider-btn:before {
+    .autocrl-slider-btn:before {
         position: absolute;
         content: "";
         height: 14px;
@@ -613,10 +738,10 @@ function updateDependencies() {
         transition: .3s;
         border-radius: 50%;
     }
-    .autobsc-switch input:checked + .autobsc-slider-btn { background-color: #7aa2f7; }
-    .autobsc-switch input:checked + .autobsc-slider-btn:before { transform: translateX(18px); }
+    .autocrl-switch input:checked + .autocrl-slider-btn { background-color: #3498db; }
+    .autocrl-switch input:checked + .autocrl-slider-btn:before { transform: translateX(18px); }
 
-    .autobsc-select {
+    .autocrl-select {
         background: #24283b;
         color: #e0e2ea;
         border: 1px solid #414868;
@@ -626,11 +751,11 @@ function updateDependencies() {
         outline: none;
         width: 100%;
     }
-    .autobsc-btn-danger {
+    .autocrl-btn-danger {
         width: 100%;
-        background: rgba(247, 118, 142, 0.2);
-        color: #f7768e;
-        border: 1px solid rgba(247, 118, 142, 0.4);
+        background: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.4);
         padding: 8px;
         border-radius: 6px;
         font-family: inherit;
@@ -640,113 +765,113 @@ function updateDependencies() {
         transition: background 0.2s;
         white-space: nowrap;
     }
-    .autobsc-btn-danger:hover { background: rgba(247, 118, 142, 0.4); }
-    #autobsc-body::-webkit-scrollbar { width: 6px; }
-    #autobsc-body::-webkit-scrollbar-track { background: transparent; }
-    #autobsc-body::-webkit-scrollbar-thumb { background: #414868; border-radius: 4px; }
+    .autocrl-btn-danger:hover { background: rgba(231, 76, 60, 0.4); }
+    #autocrl-body::-webkit-scrollbar { width: 6px; }
+    #autocrl-body::-webkit-scrollbar-track { background: transparent; }
+    #autocrl-body::-webkit-scrollbar-thumb { background: #414868; border-radius: 4px; }
     .Video__InteractionBlocker, .VideoCover.VideoCover--hidden { all: unset !important; display: none; }
     </style>
 
-    <div id="autobsc-overlay">
-        <div id="autobsc-header">
-            <span dir="ltr" style="display:inline-block;">Auto<span style="color:#ff4444;">B</span><span style="color:#ffffff;">S</span><span style="color:#ffaa00;">C</span>++</span>
-            <span class="autobsc-chevron">▼</span>
+    <div id="autocrl-overlay">
+        <div id="autocrl-header">
+            <span dir="ltr" style="display:inline-block; color: #f1c40f; text-shadow: 1px 1px 0 #000;">Auto<span style="color:#e74c3c;">C</span><span style="color:#3498db;">R</span><span style="color:#2ecc71;">L</span></span>
+            <span class="autocrl-chevron">▼</span>
         </div>
 
-        <div id="autobsc-body">
-            <div class="autobsc-inner-content">
-                <div id="autobsc-data-section" class="autobsc-hidden-block">
-                    <div class="autobsc-section-title">Data</div>
-                    <div id="autobsc-users-wrap" class="autobsc-hidden-block">
-                        <div class="autobsc-stat-row">
-                            <span>Connected users:</span>
-                            <strong id="autobsc-connected" style="color:#e0af68">unknown</strong>
+        <div id="autocrl-body">
+            <div class="autocrl-inner-content">
+                <div id="autocrl-data-section" class="autocrl-hidden-block">
+                    <div class="autocrl-section-title">Данные</div>
+                    <div id="autocrl-users-wrap" class="autocrl-hidden-block">
+                        <div class="autocrl-stat-row">
+                            <span>Подключено:</span>
+                            <strong id="autocrl-connected" style="color:#f1c40f">неизвестно</strong>
                         </div>
                     </div>
 
-                    <div id="autobsc-teams-wrap" class="autobsc-hidden-block">
-                        <div class="autobsc-stat-row">
-                            <span>Blue team:</span> <strong id="autobsc-pick-blue" style="color:#7dcfff">unknown</strong>
+                    <div id="autocrl-teams-wrap" class="autocrl-hidden-block">
+                        <div class="autocrl-stat-row">
+                            <span>Синяя команда:</span> <strong id="autocrl-pick-blue" style="color:#3498db">неизвестно</strong>
                         </div>
-                        <div class="autobsc-stat-row">
-                            <span>Red team:</span> <strong id="autobsc-pick-red" style="color:#f7768e">unknown</strong>
+                        <div class="autocrl-stat-row">
+                            <span>Красная команда:</span> <strong id="autocrl-pick-red" style="color:#e74c3c">неизвестно</strong>
                         </div>
                     </div>
                 </div>
 
-                <div class="autobsc-section-title" id="autobsc-config-title" style="margin-top: 0px;">Config</div>
-                <div class="autobsc-config-row">
-                    <span>Autocheer</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-cheer"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-section-title" id="autocrl-config-title" style="margin-top: 0px;">Настройки</div>
+                <div class="autocrl-config-row">
+                    <span>Авточирс</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-cheer"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Answer polls</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-poll"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Отвечать на опросы</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-poll"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Answer quiz</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-quiz"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Отвечать на викторины</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-quiz"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Answer slider</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-slider"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Отвечать на слайдеры</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-slider"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Collect lootdrops</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-lootdrop"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Собирать дропы</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-lootdrop"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Autopredict</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-predict"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Автопредикт</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-predict"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row" id="autobsc-strat-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-                    <span>Prediction strategy</span>
-                    <select class="autobsc-select" id="autobsc-predict-strat">
-                        <option value="1">Blue only</option>
-                        <option value="2">Red only</option>
-                        <option value="rand">Random</option>
-                        <option value="maj">Follow majority</option>
+                <div class="autocrl-config-row" id="autocrl-strat-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                    <span>Стратегия предикта</span>
+                    <select class="autocrl-select" id="autocrl-predict-strat">
+                        <option value="1">Только синие</option>
+                        <option value="2">Только красные</option>
+                        <option value="rand">Случайно</option>
+                        <option value="maj">За большинством</option>
                     </select>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Feed logging</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-feedlogging"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Логи в чат</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-feedlogging"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row" id="autobsc-dyn-row">
-                    <span>Dynamic logging</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-dynamiclogging"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row" id="autocrl-dyn-row">
+                    <span>Динамические логи</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-dynamiclogging"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>No Cheer Graphics</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-lowdetail"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Без графики чирса</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-lowdetail"><span class="autocrl-slider-btn"></span></label>
                 </div>
-                <div class="autobsc-config-row">
-                    <span>Disable stream player</span>
-                    <label class="autobsc-switch"><input type="checkbox" id="autobsc-noplayer"><span class="autobsc-slider-btn"></span></label>
+                <div class="autocrl-config-row">
+                    <span>Отключить плеер</span>
+                    <label class="autocrl-switch"><input type="checkbox" id="autocrl-noplayer"><span class="autocrl-slider-btn"></span></label>
                 </div>
 
-                <button class="autobsc-btn-danger" onclick='if(confirm("Are you sure?")) document.getElementById("autobsc-overlay").remove()'>
-                    Hide Menu
+                <button class="autocrl-btn-danger" onclick='if(confirm("Вы уверены?")) document.getElementById("autocrl-overlay").remove()'>
+                    Скрыть меню
                 </button>
             </div>
         </div>
     </div>
         `);
 
-        dragElement(document.getElementById("autobsc-overlay"));
+        dragElement(document.getElementById("autocrl-overlay"));
 
         const elems = {
-            cheer: document.getElementById("autobsc-cheer"),
-            poll: document.getElementById("autobsc-poll"),
-            quiz: document.getElementById("autobsc-quiz"),
-            slider: document.getElementById("autobsc-slider"),
-            lootdrop: document.getElementById("autobsc-lootdrop"),
-            predict: document.getElementById("autobsc-predict"),
-            predictstrat: document.getElementById("autobsc-predict-strat"),
-            feedlogging: document.getElementById("autobsc-feedlogging"),
-            dynamiclogging: document.getElementById("autobsc-dynamiclogging"),
-            lowdetail: document.getElementById("autobsc-lowdetail"),
-            noplayer: document.getElementById("autobsc-noplayer")
+            cheer: document.getElementById("autocrl-cheer"),
+            poll: document.getElementById("autocrl-poll"),
+            quiz: document.getElementById("autocrl-quiz"),
+            slider: document.getElementById("autocrl-slider"),
+            lootdrop: document.getElementById("autocrl-lootdrop"),
+            predict: document.getElementById("autocrl-predict"),
+            predictstrat: document.getElementById("autocrl-predict-strat"),
+            feedlogging: document.getElementById("autocrl-feedlogging"),
+            dynamiclogging: document.getElementById("autocrl-dynamiclogging"),
+            lowdetail: document.getElementById("autocrl-lowdetail"),
+            noplayer: document.getElementById("autocrl-noplayer")
         };
 
         elems.cheer.checked = cheerEnabled;
@@ -759,7 +884,7 @@ function updateDependencies() {
         elems.dynamiclogging.checked = dynamicLogging;
         elems.predictstrat.value = matchPredictionStrategy;
         elems.lowdetail.checked = lowDetail;
-        elems.noplayer.checked = noPlayer
+        elems.noplayer.checked = noPlayer;
 
         updateDependencies();
 
@@ -816,16 +941,16 @@ function updateDependencies() {
             setTimeout(() => purge(document.getElementsByTagName("iframe")), 1000)
         }
 
-        conn = document.getElementById("autobsc-connected");
-        matchpredblue = document.getElementById("autobsc-pick-blue");
-        matchpredred = document.getElementById("autobsc-pick-red");
+        conn = document.getElementById("autocrl-connected");
+        matchpredblue = document.getElementById("autocrl-pick-blue");
+        matchpredred = document.getElementById("autocrl-pick-red");
         if (noPlayer) {
           purge(document.getElementsByTagName("iframe"))
           setTimeout(() => purge(document.getElementsByTagName("iframe")), 1000)
         }
     }
 
-    const loadedMessageHtml = `<div data-v-6ab4ab95="" data-v-e989f123="" id="autobsc-log-startup">
+    const loadedMessageHtml = `<div data-v-6ab4ab95="" data-v-e989f123="" id="autocrl-log-startup">
     <div data-v-307c1ac7="" data-v-6ab4ab95="" class="contentCardContainer" with-extra-top-margin="" style="translate: none; rotate: none; scale: none; transform: translate3d(0px, 0px, 0px); opacity: 1; --v3ee5afce: #245fc1;">
         <div data-v-615f3480="" data-v-307c1ac7="" class="baseCard baseCard--paper" radius="medium">
             <div data-v-615f3480="" class="baseCard__cardBackground baseCard__cardBackground--paper-3"></div>
@@ -835,12 +960,12 @@ function updateDependencies() {
                     <div data-v-6ab4ab95="" class="rewardCard">
                         <div data-v-6ab4ab95="" class="rewardCard__rewardContainer">
                             <div data-v-6ab4ab95="" class="rewardCard__reward" style="translate: none; rotate: none; scale: none; transform: translate3d(0px, -1.3431px, 0px);">
-                                <picture data-v-58643600="" data-v-6ab4ab95="" class="cmsImage cmsImage--loaded cmsImage--fullWidth"><img data-v-58643600="" class="cmsImage cmsImage--loaded cmsImage--fullWidth" src="https://event.supercell.com/brawlstars/assets/rewards/images/7emETQCs7gjPr7rg1VJyFa.svg" loading="lazy"></picture>
+                                <picture data-v-58643600="" data-v-6ab4ab95="" class="cmsImage cmsImage--loaded cmsImage--fullWidth"><img data-v-58643600="" class="cmsImage cmsImage--loaded cmsImage--fullWidth" src="https://event.supercell.com/clashroyale/assets/rewards/images/7emETQCs7gjPr7rg1VJyFa.svg" loading="lazy"></picture>
                             </div>
                             <div data-v-6ab4ab95="" class="rewardCard__infoContainer">
                                 <div data-v-6ab4ab95="" class="rewardCard__textContainer" style="opacity: 1;">
-                                    <div data-v-6ab4ab95="" class="rewardCard__textContainer__title">AutoBSC++ Loaded</div>
-                                    <div data-v-6ab4ab95="" class="rewardCard__textContainer__subTitle">made by laptopcat<br>UI by 123SONIC321<br>based on AutoBSC by catme0w</div>
+                                    <div data-v-6ab4ab95="" class="rewardCard__textContainer__title" style="color: #f1c40f !important; text-shadow: 0 2px 4px rgba(0,0,0,0.9) !important; font-weight: bold !important;">AutoCRL Загружен (Auto Clash Royale League)</div>
+                                    <div data-v-6ab4ab95="" class="rewardCard__textContainer__subTitle" style="color: #b8c5d6 !important; font-family: 'SupercellText-Regular', sans-serif !important;">vadimkaxd<br>UI by 123SONIC321<br>на основе AutoBSC от catme0w</div>
                                 </div>
                             </div>
                         </div>
@@ -859,7 +984,7 @@ function dragElement(elmnt) {
         pos2 = 0,
         pos3 = 0,
         pos4 = 0;
-    let dragger = document.getElementById("autobsc-header");
+    let dragger = document.getElementById("autocrl-header");
     let isDragging = false;
 
     if (dragger) {
@@ -934,7 +1059,7 @@ function dragElement(elmnt) {
 
                 setTimeout(() => {
                     if (elmnt.classList.contains('open')) {
-                        document.getElementById("autobsc-body").classList.add("allow-scroll");
+                        document.getElementById("autocrl-body").classList.add("allow-scroll");
                     }
                 }, 400);
 
@@ -945,7 +1070,7 @@ function dragElement(elmnt) {
                 }
                 setTimeout(() => enforceBounds(elmnt), 350);
             } else {
-                document.getElementById("autobsc-body").classList.remove("allow-scroll");
+                document.getElementById("autocrl-body").classList.remove("allow-scroll");
                 elmnt.classList.remove('open');
             }
         }
